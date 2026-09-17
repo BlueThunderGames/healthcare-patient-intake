@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    /* Language/runtime target */
+    "target": "ES2022",
+    "lib": ["ES2022"],
+
+    /* Module system: NodeNext mirrors how Node itself resolves ESM at runtime,
+       which is why relative imports need explicit .js extensions even though
+       the source files are .ts. */
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+
+    /* Output */
+    "outDir": "dist",
+    "rootDir": "src",
+    "sourceMap": true,
+
+    /* Strictness */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Interop */
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+
+    /* Editor/build ergonomics */
+    "declaration": false,
+    "verbatimModuleSyntax": false
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
