@@ -64,10 +64,12 @@ export function RegisterForm() {
                 body: JSON.stringify(data),
             });
 
+            const result = await response.json() as ApiErrorResponse;
+
             if (!response.ok) {
                 setServerMessage(result.error?.message ?? "Unable to create your account");
                 return;
-            };
+            }
 
             setSuccessMessage("Account created successfully");
             reset();

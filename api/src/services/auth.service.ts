@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { prisma } from "../lib/prisma.js";
-import { registerSchema } from "../validators/auth.validator.js";
+import { registerSchema, loginSchema } from "../validators/auth.validator.js";
 import { z } from "zod";
 
 type RegisterInput = z.infer<typeof registerSchema>;
@@ -41,4 +41,29 @@ export async function registerUser(input: RegisterInput) {
             profile: { id: profile.id, firstName: profile.firstName, lastName: profile.lastName, dateOfBirth: profile.dateOfBirth },
         };
     });
+}
+
+type LoginInput = z.infer<typeof loginSchema>;
+
+export async function loginUser(input: LoginInput) {
+
+    const user = await prisma.user.findUnique({
+        where: {
+            email: input.email,
+        }
+    });
+
+    if (!user) {
+        throw new Error("Invalid credentials");
+    }
+
+    const passwordMatches = await bcrypt.compare(input.password, user.passwordHash);
+
+    if(!passwordMatches) {
+        throw new Error("Invalid credentials");
+    }
+
+    return {
+        user: {id: user.id, email: user.email, role: user.role }
+    }
 }
