@@ -49,6 +49,7 @@ export async function loginController(req: Request, res: Response) {
         res.cookie("session", String(result.user.id), {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
+            path: "/",
             sameSite: "lax",
             signed: true,
             maxAge: 1000 * 60 * 60 * 24 * 7,
@@ -91,4 +92,15 @@ export function meController(_req: Request, res: Response) {
     return res.status(200).json({
         user: res.locals.user,
     });
+}
+
+export function logoutController(_req: Request, res: Response) {
+    res.clearCookie("session", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+    });
+
+    return res.status(204).send();
 }
