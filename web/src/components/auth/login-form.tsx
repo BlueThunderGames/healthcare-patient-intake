@@ -60,7 +60,7 @@ export function LoginForm() {
         return;
       }
 
-      router.push("/account");
+      router.replace("/account");
     } catch {
       setServerMessage(
         "We couldn't reach the sign-in service. Please try again.",

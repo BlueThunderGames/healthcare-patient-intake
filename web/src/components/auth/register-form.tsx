@@ -14,12 +14,20 @@ const registerSchema = z.object({
   profile: z.object({
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
-    dateOfBirth: z.string().refine((date) => {
-      const parsedDate = new Date(date);
-      return !Number.isNaN(parsedDate.getTime());
-    }, {
-      message: "Enter a valid date of birth",
-    }),
+    dateOfBirth: z
+      .string()
+      .refine(
+        (date) => {
+          const parsedDate = new Date(date);
+          return !Number.isNaN(parsedDate.getTime());
+        },
+        {
+          message: "Enter a valid date of birth",
+        },
+      )
+      .refine((date) => new Date(date) < new Date(), {
+        message: "Date of birth must be in the past",
+      }),
   }),
 });
 

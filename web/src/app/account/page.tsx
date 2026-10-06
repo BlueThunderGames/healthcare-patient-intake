@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   CircleAlert,
+  FileHeart,
   LogOut,
   ShieldCheck,
   UserRound,
@@ -22,7 +23,7 @@ import {
 type AccountUser = {
   id: number;
   email: string;
-  role: string;
+  role: "PATIENT" | "CLINICIAN" | "ADMIN";
 };
 
 type PageState =
@@ -156,13 +157,13 @@ export default function AccountPage() {
         <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-semibold tracking-wide text-primary">
-              PATIENT PORTAL
+              {user.role === "PATIENT" ? "PATIENT PORTAL" : "CARE PORTAL"}
             </p>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
               Your account
             </h1>
             <p className="mt-2 text-muted-foreground">
-              Manage your sign-in details and view your patient profile.
+              Manage your sign-in details and access available portal tools.
             </p>
           </div>
           <Button
@@ -184,8 +185,8 @@ export default function AccountPage() {
           </p>
         )}
 
-        <div className="grid gap-5 md:grid-cols-[1.2fr_0.8fr]">
-          <Card>
+        <div className="grid gap-5 md:grid-cols-2">
+          <Card className="md:col-span-2">
             <CardHeader>
               <div className="flex items-center gap-3">
                 <span className="flex size-10 items-center justify-center rounded-lg bg-primary/5 text-primary">
@@ -221,33 +222,65 @@ export default function AccountPage() {
             </CardContent>
           </Card>
 
-          <Card className="justify-between">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <span className="flex size-10 items-center justify-center rounded-lg bg-primary/5 text-primary">
-                  <ShieldCheck aria-hidden="true" className="size-5" />
-                </span>
-                <div>
-                  <CardTitle>Patient profile</CardTitle>
-                  <CardDescription className="mt-1">
-                    Review your personal details
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm leading-6 text-muted-foreground">
-                View the profile information associated with your patient
-                account.
-              </p>
-              <Button asChild className="mt-5 w-full">
-                <Link href="/account/profile">
-                  View profile
-                  <ArrowRight aria-hidden="true" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+          {user.role === "PATIENT" && (
+            <>
+              <Card className="justify-between">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-10 items-center justify-center rounded-lg bg-primary/5 text-primary">
+                      <ShieldCheck aria-hidden="true" className="size-5" />
+                    </span>
+                    <div>
+                      <CardTitle>Patient profile</CardTitle>
+                      <CardDescription className="mt-1">
+                        Review your personal details
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    View the profile information associated with your patient
+                    account.
+                  </p>
+                  <Button asChild className="mt-5 w-full">
+                    <Link href="/account/profile">
+                      View profile
+                      <ArrowRight aria-hidden="true" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="justify-between">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-10 items-center justify-center rounded-lg bg-primary/5 text-primary">
+                      <FileHeart aria-hidden="true" className="size-5" />
+                    </span>
+                    <div>
+                      <CardTitle>Clinical record</CardTitle>
+                      <CardDescription className="mt-1">
+                        View your available clinical notes
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    Review the read-only clinical record maintained by your care
+                    team.
+                  </p>
+                  <Button asChild className="mt-5 w-full">
+                    <Link href="/account/record">
+                      View record
+                      <ArrowRight aria-hidden="true" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
       </div>
     </main>
