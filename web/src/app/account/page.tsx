@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { useEffect } from "react";
+import {
+  useMutation,
+  useQueryClient
+} from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -20,100 +27,41 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-type AccountUser = {
-  id: number;
-  email: string;
-  role: "PATIENT" | "CLINICIAN" | "ADMIN";
-};
-
-type PageState =
-  | { status: "loading" }
-  | { status: "ready"; user: AccountUser }
-  | { status: "error"; message: string };
-
 export default function AccountPage() {
   const router = useRouter();
-  const [pageState, setPageState] = useState<PageState>({
-    status: "loading",
-  });
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [logoutError, setLogoutError] = useState<string | null>(null);
+  const auth = useAuth();
+  const user = auth.user;
 
   useEffect(() => {
-    const controller = new AbortController();
-
-    async function loadUser() {
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`,
-          {
-            credentials: "include",
-            signal: controller.signal,
-          },
-        );
-
-        if (response.status === 401) {
-          router.replace("/login");
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error("We couldn't load your account. Please try again.");
-        }
-
-        const result = (await response.json()) as { user: AccountUser };
-        setPageState({ status: "ready", user: result.user });
-      } catch (error) {
-        if (controller.signal.aborted) {
-          return;
-        }
-
-        console.error("Failed to load account:", error);
-        setPageState({
-          status: "error",
-          message:
-            error instanceof Error
-              ? error.message
-              : "An unknown error occurred.",
-        });
-      }
-    }
-
-    void loadUser();
-    return () => controller.abort();
-  }, [router]);
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    setLogoutError(null);
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`,
-        {
-          method: "POST",
-          credentials: "include",
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error("We couldn't sign you out. Please try again.");
-      }
-
+    if (auth.isUnauthenticated) {
       router.replace("/login");
-    } catch (error) {
-      console.error("Failed to sign out:", error);
-      setLogoutError(
-        error instanceof Error
-          ? error.message
-          : "An unknown error occurred while signing out.",
-      );
-    } finally {
-      setIsLoggingOut(false);
     }
-  };
+  }, [auth.isUnauthenticated, router]);
 
-  if (pageState.status === "loading") {
+  const queryClient = useQueryClient();
+
+  const logoutMutation = useMutation({
+    mutationFn: () =>
+      apiFetch<void>("/api/auth/logout", {
+        method: "POST",
+      }),
+    onSuccess: () => {
+      queryClient.removeQueries({
+        queryKey: queryKeys.auth.me,
+      });
+      queryClient.removeQueries({
+        queryKey: queryKeys.patients.all,
+      });
+      router.replace("/login");
+    },
+  });
+
+  const logoutError =
+  logoutMutation.error instanceof Error
+    ? logoutMutation.error.message
+    : null;
+
+  if (auth.isLoading || auth.isUnauthenticated) {
     return (
       <main className="flex-1 bg-muted/30 px-4 py-10 sm:px-6 sm:py-14">
         <div className="mx-auto w-full max-w-4xl">
@@ -130,7 +78,11 @@ export default function AccountPage() {
     );
   }
 
-  if (pageState.status === "error") {
+  if (auth.isError || !user) {
+    const message =
+      auth.error instanceof Error
+        ? auth.error.message
+        : "We couldn't load your account.";
     return (
       <main className="flex-1 bg-muted/30 px-4 py-10 sm:px-6 sm:py-14">
         <div className="mx-auto w-full max-w-4xl">
@@ -141,15 +93,13 @@ export default function AccountPage() {
                 className="size-6 text-destructive"
               />
               <CardTitle>Unable to load your account</CardTitle>
-              <CardDescription role="alert">{pageState.message}</CardDescription>
+              <CardDescription role="alert">{message}</CardDescription>
             </CardHeader>
           </Card>
         </div>
       </main>
     );
   }
-
-  const { user } = pageState;
 
   return (
     <main className="flex-1 bg-muted/30 px-4 py-10 sm:px-6 sm:py-14">
@@ -168,11 +118,11 @@ export default function AccountPage() {
           </div>
           <Button
             variant="outline"
-            onClick={handleLogout}
-            disabled={isLoggingOut}
+            onClick={() => logoutMutation.mutate()}
+            disabled={logoutMutation.isPending}
           >
             <LogOut aria-hidden="true" />
-            {isLoggingOut ? "Signing out…" : "Sign out"}
+            {logoutMutation.isPending ? "Signing out…" : "Sign out"}
           </Button>
         </header>
 
