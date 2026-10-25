@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { formatDateTime } from "@/lib/date";
 
 type PatientRecord = {
   id: number;
@@ -33,22 +34,6 @@ type PageState =
   | { status: "forbidden" }
   | { status: "not-found" }
   | { status: "error"; message: string };
-
-function formatDateTime(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleString(undefined, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
 
 export default function RecordPage() {
   const router = useRouter();

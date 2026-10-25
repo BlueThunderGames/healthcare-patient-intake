@@ -11,6 +11,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatDateOnly } from "@/lib/date";
 
 type PatientProfile = {
   id: number;
@@ -24,20 +25,6 @@ type PageState =
   | { status: "success"; patient: PatientProfile }
   | { status: "not-found" }
   | { status: "error"; message: string };
-
-function formatDateOfBirth(value: string) {
-  const [year, month, day] = value.slice(0, 10).split("-").map(Number);
-
-  if (!year || !month || !day) {
-    return value;
-  }
-
-  return new Date(year, month - 1, day).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
 
 function ProfileField({
   icon: Icon,
@@ -123,7 +110,7 @@ export default function ProfilePage() {
 
   if (pageState.status === "loading") {
     return (
-      <main className="min-h-full flex-1 bg-muted/30 px-4 py-10 sm:px-6 sm:py-14">
+      <main className="flex-1 bg-muted/30 px-4 py-10 sm:px-6 sm:py-14">
         <div className="mx-auto w-full max-w-4xl">
           <p role="status" className="sr-only">
             Loading your profile
@@ -149,7 +136,7 @@ export default function ProfilePage() {
       : pageState.message;
 
     return (
-      <main className="min-h-full flex-1 bg-muted/30 px-4 py-10 sm:px-6 sm:py-14">
+      <main className="flex-1 bg-muted/30 px-4 py-10 sm:px-6 sm:py-14">
         <div className="mx-auto w-full max-w-4xl">
           <Button variant="outline" asChild className="mb-6">
             <Link href="/account">
@@ -183,7 +170,7 @@ export default function ProfilePage() {
   const { patient } = pageState;
 
   return (
-    <main className="min-h-full flex-1 bg-muted/30 px-4 py-10 sm:px-6 sm:py-14">
+    <main className="flex-1 bg-muted/30 px-4 py-10 sm:px-6 sm:py-14">
       <div className="mx-auto w-full max-w-4xl">
         <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -242,7 +229,7 @@ export default function ProfilePage() {
             <ProfileField
               icon={CalendarDays}
               label="Date of birth"
-              value={formatDateOfBirth(patient.dateOfBirth)}
+              value={formatDateOnly(patient.dateOfBirth)}
             />
           </dl>
         </section>

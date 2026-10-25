@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { apiFetch, ApiError } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 
-type Role = "PATIENT" | "CLINICIAN" | "ADMIN";
+export type Role = "PATIENT" | "CLINICIAN" | "ADMIN";
 
-type AuthUser = {
+export type AuthUser = {
   id: number;
   email: string;
   role: Role;

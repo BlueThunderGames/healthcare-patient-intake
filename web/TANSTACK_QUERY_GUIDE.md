@@ -7,41 +7,54 @@ application's query architecture changes.
 The examples describe the intended architecture. During implementation, update
 the file paths and examples to match the final code exactly.
 
-## Implementation Checkpoint — October 5, 2026
+## Implementation Checkpoint — October 24, 2026
 
 ### Completed
 
 - Installed `@tanstack/react-query` v5.
 - Added this project-specific TanStack Query reference.
+- Created one stable `QueryClient` in `src/app/providers.tsx`.
+- Mounted `QueryClientProvider` from the root layout.
+- Added `src/lib/api.ts` with `apiFetch<T>` and `ApiError`.
+- Added centralized query keys in `src/lib/query-keys.ts`.
+- Added `useAuth()` over the `["auth", "me"]` query.
+- Added `usePatientRecord()`, which is ready but not yet used by the record page.
+- Fully converted the account page to TanStack Query:
+  - Authentication state comes from `useAuth()`.
+  - Logout uses `useMutation()`.
+  - Auth and patient caches are removed after logout.
+  - Manual authentication fetching and request state were removed.
 - Completed the ShadCN patient-record page.
 - Added loading, empty, forbidden, not-found, and error record states.
 - Added a patient-only clinical-record card to the account page.
 - Made the account dashboard role-aware.
 - Aligned frontend date-of-birth validation with the API.
 - Changed successful login navigation to replace the login history entry.
-- Verified frontend lint and production build before beginning the query refactor.
+- Verified frontend lint and production build after the account-page conversion.
+- Committed the completed account integration as
+  `545a104 refactor(web): introduce TanStack Query for auth state`.
 
 ### Current stopping point
 
-TanStack Query is installed, but no `QueryClient` or provider has been created
-yet. The existing account, profile, and record pages still use their original
-`useEffect` request lifecycle code.
+The account page is the first fully converted TanStack page. The profile and
+record pages still use their original `useEffect`, `fetch`, `AbortController`,
+and local `PageState` request lifecycle code.
 
-The working tree contains uncommitted frontend changes. Review `git status`
-before continuing.
+The repository is clean on `main` and synchronized with `origin/main`.
 
 ### Start here next session
 
-1. Create `src/app/providers.tsx` as a Client Component.
-2. Create one stable `QueryClient` using lazy `useState`.
-3. Wrap the root layout's children with `QueryClientProvider`.
+1. Refactor `src/app/account/record/page.tsx` to use
+   `usePatientRecord()`.
+2. Replace its manual request lifecycle with TanStack's pending, error, and
+   data states.
+3. Preserve redirects and the forbidden, not-found, empty, error, and success
+   displays.
 4. Run `npm run lint` and `npm run build`.
-5. Add `src/lib/api.ts` with `apiFetch<T>` and `ApiError`.
-6. Add centralized query keys.
-7. Implement `useAuth()` over the `["auth", "me"]` query.
-8. Add the protected route layout.
-9. Refactor account, profile, and record pages one at a time.
-10. Extract `formatDateOnly` and `formatDateTime` into `src/lib/date.ts`.
+5. Add `usePatientProfile()` and convert the profile page.
+6. Extract `formatDateOnly` and `formatDateTime` into `src/lib/date.ts`.
+7. Evaluate a protected route layout only after the existing pages are
+   converted and working.
 
 Do not refactor every page simultaneously. Verify each layer before moving to
 the next one.
