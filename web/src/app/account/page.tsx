@@ -1,18 +1,13 @@
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
-import { useEffect } from "react";
-import {
-  useMutation,
-  useQueryClient
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
-  CircleAlert,
   FileHeart,
   LogOut,
   ShieldCheck,
@@ -29,15 +24,7 @@ import {
 
 export default function AccountPage() {
   const router = useRouter();
-  const auth = useAuth();
-  const user = auth.user;
-
-  useEffect(() => {
-    if (auth.isUnauthenticated) {
-      router.replace("/login");
-    }
-  }, [auth.isUnauthenticated, router]);
-
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const logoutMutation = useMutation({
@@ -61,44 +48,8 @@ export default function AccountPage() {
     ? logoutMutation.error.message
     : null;
 
-  if (auth.isLoading || auth.isUnauthenticated) {
-    return (
-      <main className="flex-1 bg-muted/30 px-4 py-10 sm:px-6 sm:py-14">
-        <div className="mx-auto w-full max-w-4xl">
-          <p role="status" className="sr-only">
-            Loading your account
-          </p>
-          <div className="animate-pulse rounded-xl border bg-card p-6 shadow-sm sm:p-8">
-            <div className="h-3 w-28 rounded bg-muted" />
-            <div className="mt-3 h-8 w-52 rounded bg-muted" />
-            <div className="mt-8 h-36 rounded bg-muted" />
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  if (auth.isError || !user) {
-    const message =
-      auth.error instanceof Error
-        ? auth.error.message
-        : "We couldn't load your account.";
-    return (
-      <main className="flex-1 bg-muted/30 px-4 py-10 sm:px-6 sm:py-14">
-        <div className="mx-auto w-full max-w-4xl">
-          <Card>
-            <CardHeader>
-              <CircleAlert
-                aria-hidden="true"
-                className="size-6 text-destructive"
-              />
-              <CardTitle>Unable to load your account</CardTitle>
-              <CardDescription role="alert">{message}</CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-      </main>
-    );
+  if (!user) {
+    return null;
   }
 
   return (

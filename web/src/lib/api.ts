@@ -15,6 +15,14 @@ export class ApiError extends Error {
   }
 }
 
+export function shouldRetryQuery(failureCount: number, error: Error) {
+  if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
+    return false;
+  }
+
+  return failureCount < 1;
+}
+
 export async function apiFetch<T>(
   path: string,
   init: RequestInit = {},

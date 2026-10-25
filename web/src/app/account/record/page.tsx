@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   CalendarClock,
-  CircleAlert,
   FileHeart,
   ShieldCheck,
 } from "lucide-react";
+import {
+  AccountErrorState,
+  AccountPageSkeleton,
+} from "@/components/account/account-page-state";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,154 +19,56 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { usePatientRecord } from "@/hooks/use-patient-record";
+import { ApiError } from "@/lib/api";
 import { formatDateTime } from "@/lib/date";
 
-type PatientRecord = {
-  id: number;
-  notes: string;
-  createdAt: string;
-  updatedAt: string;
-};
+function getRecordErrorContent(error: unknown) {
+  if (error instanceof ApiError && error.status === 403) {
+    return {
+      title: "Record access unavailable",
+      message: "This account does not have access to a patient record.",
+    };
+  }
 
-type PageState =
-  | { status: "loading" }
-  | { status: "ready"; record: PatientRecord }
-  | { status: "empty" }
-  | { status: "forbidden" }
-  | { status: "not-found" }
-  | { status: "error"; message: string };
+  if (error instanceof ApiError && error.status === 404) {
+    return {
+      title: "Patient profile unavailable",
+      message: "We couldn't find a patient profile for this account.",
+    };
+  }
+
+  return {
+    title: "Unable to load your record",
+    message:
+      error instanceof Error
+        ? error.message
+        : "We couldn't load your record. Please try again.",
+  };
+}
 
 export default function RecordPage() {
-  const router = useRouter();
-  const [pageState, setPageState] = useState<PageState>({
-    status: "loading",
-  });
+  const recordQuery = usePatientRecord();
 
-  useEffect(() => {
-    const controller = new AbortController();
+  if (recordQuery.isPending) {
+    return <AccountPageSkeleton label="Loading your record" />;
+  }
 
-    async function loadRecord() {
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/patients/me/record`,
-          {
-            credentials: "include",
-            signal: controller.signal,
-          },
-        );
+  if (recordQuery.isError) {
+    const content = getRecordErrorContent(recordQuery.error);
 
-        if (response.status === 401) {
-          router.replace("/login");
-          return;
-        }
-
-        if (response.status === 403) {
-          setPageState({ status: "forbidden" });
-          return;
-        }
-
-        if (response.status === 404) {
-          setPageState({ status: "not-found" });
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error("We couldn't load your record. Please try again.");
-        }
-
-        const result = (await response.json()) as {
-          record: PatientRecord | null;
-        };
-
-        setPageState(
-          result.record
-            ? { status: "ready", record: result.record }
-            : { status: "empty" },
-        );
-      } catch (error) {
-        if (controller.signal.aborted) {
-          return;
-        }
-
-        console.error("Failed to load record:", error);
-        setPageState({
-          status: "error",
-          message:
-            error instanceof Error
-              ? error.message
-              : "An unknown error occurred.",
-        });
-      }
-    }
-
-    void loadRecord();
-    return () => controller.abort();
-  }, [router]);
-
-  if (pageState.status === "loading") {
     return (
-      <main className="flex-1 bg-muted/30 px-4 py-10 sm:px-6 sm:py-14">
-        <div className="mx-auto w-full max-w-4xl">
-          <p role="status" className="sr-only">
-            Loading your record
-          </p>
-          <div className="animate-pulse rounded-xl border bg-card p-6 shadow-sm sm:p-8">
-            <div className="h-3 w-28 rounded bg-muted" />
-            <div className="mt-3 h-8 w-52 rounded bg-muted" />
-            <div className="mt-8 h-36 rounded bg-muted" />
-          </div>
-        </div>
-      </main>
+      <AccountErrorState
+        title={content.title}
+        message={content.message}
+        backHref="/account"
+      />
     );
   }
 
-  if (
-    pageState.status === "error" ||
-    pageState.status === "forbidden" ||
-    pageState.status === "not-found"
-  ) {
-    const content = {
-      error: {
-        title: "Unable to load your record",
-        message: pageState.status === "error" ? pageState.message : "",
-      },
-      forbidden: {
-        title: "Record access unavailable",
-        message: "This account does not have access to a patient record.",
-      },
-      "not-found": {
-        title: "Patient profile unavailable",
-        message: "We couldn't find a patient profile for this account.",
-      },
-    }[pageState.status];
+  const record = recordQuery.data.record;
 
-    return (
-      <main className="flex-1 bg-muted/30 px-4 py-10 sm:px-6 sm:py-14">
-        <div className="mx-auto w-full max-w-4xl">
-          <Button variant="outline" asChild className="mb-6">
-            <Link href="/account">
-              <ArrowLeft aria-hidden="true" />
-              Back to account
-            </Link>
-          </Button>
-          <Card>
-            <CardHeader>
-              <CircleAlert
-                aria-hidden="true"
-                className="size-6 text-destructive"
-              />
-              <CardTitle>{content.title}</CardTitle>
-              <CardDescription role="alert">
-                {content.message}
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-      </main>
-    );
-  }
-
-  if (pageState.status === "empty") {
+  if (!record) {
     return (
       <main className="flex-1 bg-muted/30 px-4 py-10 sm:px-6 sm:py-14">
         <div className="mx-auto w-full max-w-4xl">
@@ -188,8 +91,6 @@ export default function RecordPage() {
       </main>
     );
   }
-
-  const { record } = pageState;
 
   return (
     <main className="flex-1 bg-muted/30 px-4 py-10 sm:px-6 sm:py-14">
