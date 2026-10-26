@@ -8,6 +8,10 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65_535).default(4000),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   CLIENT_ORIGIN: z.url("CLIENT_ORIGIN must be a valid URL"),
+  SEED_CLINICIAN_EMAIL: z.email().optional(),
+  SEED_CLINICIAN_PASSWORD: z.string().min(8).optional(),
+  SEED_ADMIN_EMAIL: z.email().optional(),
+  SEED_ADMIN_PASSWORD: z.string().min(8).optional(),
 });
 
 const result = envSchema.safeParse(process.env);
