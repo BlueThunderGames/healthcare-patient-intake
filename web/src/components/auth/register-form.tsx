@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import { CheckCircle2, CircleAlert, LoaderCircle } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { apiFetch, getRequestErrorMessage } from "@/lib/api";
 
 const registerSchema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -33,21 +34,13 @@ const registerSchema = z.object({
 });
 
 type RegisterInput = z.infer<typeof registerSchema>;
-type ApiErrorResponse = {
-  error?: {
-    message?: string;
-  };
-};
 
 export function RegisterForm() {
-  const [serverMessage, setServerMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -61,39 +54,27 @@ export function RegisterForm() {
     },
   });
 
-  const onSubmit = async (data: RegisterInput) => {
-    setServerMessage(null);
-    setSuccessMessage(null);
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        },
-      );
-
-      const result = (await response.json()) as ApiErrorResponse;
-
-      if (!response.ok) {
-        setServerMessage(
-          result.error?.message ?? "Unable to create your account.",
-        );
-        return;
-      }
-
-      setSuccessMessage("Your account was created. You can now sign in.");
+  const registerMutation = useMutation({
+    mutationFn: (data: RegisterInput) =>
+      apiFetch<unknown>("/api/auth/register", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
       reset();
-    } catch {
-      setServerMessage(
-        "We couldn't reach the registration service. Please try again.",
-      );
-    }
+    },
+  });
+
+  const serverMessage = getRequestErrorMessage(
+    registerMutation.error,
+    "We couldn't reach the registration service. Please try again.",
+  );
+  const successMessage = registerMutation.isSuccess
+    ? "Your account was created. You can now sign in."
+    : null;
+
+  const onSubmit = (data: RegisterInput) => {
+    registerMutation.mutate(data);
   };
 
   return (
@@ -229,8 +210,13 @@ export function RegisterForm() {
         </Alert>
       )}
 
-      <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-        {isSubmitting ? (
+      <Button
+        type="submit"
+        className="w-full"
+        size="lg"
+        disabled={registerMutation.isPending}
+      >
+        {registerMutation.isPending ? (
           <>
             <LoaderCircle aria-hidden="true" className="animate-spin" />
             Creating account…

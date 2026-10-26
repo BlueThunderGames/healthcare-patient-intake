@@ -1,14 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { CircleAlert, LoaderCircle } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import type { AuthUser } from "@/hooks/use-auth";
+import { apiFetch, getRequestErrorMessage } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -16,20 +19,18 @@ const loginSchema = z.object({
 });
 
 type LoginInput = z.infer<typeof loginSchema>;
-type ApiErrorResponse = {
-  error?: {
-    message?: string;
-  };
+type LoginResponse = {
+  user: AuthUser;
 };
 
 export function LoginForm() {
   const router = useRouter();
-  const [serverMessage, setServerMessage] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -38,35 +39,25 @@ export function LoginForm() {
     },
   });
 
-  const onSubmit = async (data: LoginInput) => {
-    setServerMessage(null);
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        },
-      );
-
-      const result = (await response.json()) as ApiErrorResponse;
-
-      if (!response.ok) {
-        setServerMessage(result.error?.message ?? "Unable to sign in.");
-        return;
-      }
-
+  const loginMutation = useMutation({
+    mutationFn: (data: LoginInput) =>
+      apiFetch<LoginResponse>("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: (result) => {
+      queryClient.setQueryData(queryKeys.auth.me, result);
       router.replace("/account");
-    } catch {
-      setServerMessage(
-        "We couldn't reach the sign-in service. Please try again.",
-      );
-    }
+    },
+  });
+
+  const serverMessage = getRequestErrorMessage(
+    loginMutation.error,
+    "We couldn't reach the sign-in service. Please try again.",
+  );
+
+  const onSubmit = (data: LoginInput) => {
+    loginMutation.mutate(data);
   };
 
   return (
@@ -118,8 +109,13 @@ export function LoginForm() {
         </Alert>
       )}
 
-      <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-        {isSubmitting ? (
+      <Button
+        type="submit"
+        className="w-full"
+        size="lg"
+        disabled={loginMutation.isPending}
+      >
+        {loginMutation.isPending ? (
           <>
             <LoaderCircle aria-hidden="true" className="animate-spin" />
             Signing in…

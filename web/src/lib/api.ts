@@ -23,6 +23,17 @@ export function shouldRetryQuery(failureCount: number, error: Error) {
   return failureCount < 1;
 }
 
+export function getRequestErrorMessage(
+  error: Error | null,
+  fallbackMessage: string,
+) {
+  if (!error) {
+    return null;
+  }
+
+  return error instanceof ApiError ? error.message : fallbackMessage;
+}
+
 export async function apiFetch<T>(
   path: string,
   init: RequestInit = {},
