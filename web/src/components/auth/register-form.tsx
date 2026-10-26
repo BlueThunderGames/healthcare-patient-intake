@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, LoaderCircle } from "lucide-react";
+import { CheckCircle2, CircleAlert, LoaderCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -98,16 +99,15 @@ export function RegisterForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       {successMessage && (
-        <p
+        <Alert
           role="status"
-          className="flex items-start gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2.5 text-sm text-foreground"
+          className="border-primary/20 bg-primary/5"
         >
-          <CheckCircle2
-            aria-hidden="true"
-            className="mt-0.5 size-4 shrink-0 text-primary"
-          />
-          {successMessage}
-        </p>
+          <CheckCircle2 aria-hidden="true" className="text-primary" />
+          <AlertDescription className="text-foreground">
+            {successMessage}
+          </AlertDescription>
+        </Alert>
       )}
 
       <div className="grid gap-5 sm:grid-cols-2">
@@ -223,12 +223,10 @@ export function RegisterForm() {
       </div>
 
       {serverMessage && (
-        <p
-          role="alert"
-          className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
-        >
-          {serverMessage}
-        </p>
+        <Alert variant="destructive">
+          <CircleAlert aria-hidden="true" />
+          <AlertDescription>{serverMessage}</AlertDescription>
+        </Alert>
       )}
 
       <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
