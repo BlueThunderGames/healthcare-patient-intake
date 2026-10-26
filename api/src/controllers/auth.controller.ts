@@ -1,7 +1,13 @@
 import type { Request, Response } from "express";
 import { ZodError } from "zod";
+import {
+    clearSessionCookieOptions,
+    SESSION_COOKIE_NAME,
+    sessionCookieOptions,
+} from "../config/session.js";
 import { registerSchema, loginSchema } from "../validators/auth.validator.js";
 import { registerUser, loginUser } from "../services/auth.service.js";
+import { createSession, revokeSession } from "../services/session.service.js";
 
 export async function registerController(req: Request, res: Response) {
     try {
@@ -45,15 +51,13 @@ export async function loginController(req: Request, res: Response) {
     try {
         const input = loginSchema.parse(req.body);
         const result = await loginUser(input);
+        const session = await createSession(result.user.id);
 
-        res.cookie("session", String(result.user.id), {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            path: "/",
-            sameSite: "lax",
-            signed: true,
-            maxAge: 1000 * 60 * 60 * 24 * 7,
-        });
+        res.cookie(
+            SESSION_COOKIE_NAME,
+            session.token,
+            sessionCookieOptions,
+        );
 
         return res.status(200).json(result);
     } catch (error) {
@@ -94,13 +98,14 @@ export function meController(_req: Request, res: Response) {
     });
 }
 
-export function logoutController(_req: Request, res: Response) {
-    res.clearCookie("session", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-    });
+export async function logoutController(req: Request, res: Response) {
+    const token = req.cookies[SESSION_COOKIE_NAME];
+
+    if (typeof token === "string") {
+        await revokeSession(token);
+    }
+
+    res.clearCookie(SESSION_COOKIE_NAME, clearSessionCookieOptions);
 
     return res.status(204).send();
 }

@@ -8,14 +8,9 @@ import patientRoutes from './routes/patient.routes.js'
 const app = express();
 
 const clientOrigin = process.env.CLIENT_ORIGIN;
-const sessionSecret = process.env.SESSION_SECRET;
 
 if (!clientOrigin) {
     throw new Error("CLIENT_ORIGIN environment variable is required");
-}
-
-if (!sessionSecret) {
-    throw new Error("SESSION_SECRET environment variable is required");
 }
 
 app.use(cors({
@@ -23,7 +18,7 @@ app.use(cors({
     credentials: true,
 }));
 
-app.use(cookieParser(sessionSecret));
+app.use(cookieParser());
 
 app.use(express.json());
 

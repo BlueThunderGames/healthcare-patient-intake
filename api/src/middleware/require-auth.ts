@@ -1,49 +1,35 @@
 import type { NextFunction, Request, Response } from "express";
-import { prisma } from "../lib/prisma.js";
+import {
+    clearSessionCookieOptions,
+    SESSION_COOKIE_NAME,
+} from "../config/session.js";
+import { getUserForSessionToken } from "../services/session.service.js";
+
+function sendUnauthenticated(res: Response) {
+    return res.status(401).json({
+        error: {
+            code: "UNAUTHENTICATED",
+            message: "Authentication required",
+        },
+    });
+}
 
 export async function requireAuth(
     req: Request,
     res: Response,
     next: NextFunction,
 ) {
-    const session = req.signedCookies.session;
+    const token = req.cookies[SESSION_COOKIE_NAME];
 
-    if (typeof session !== "string") {
-        return res.status(401).json({
-            error: {
-                code: "UNAUTHENTICATED",
-                message: "Authentication required"
-            },
-        });
+    if (typeof token !== "string") {
+        return sendUnauthenticated(res);
     }
 
-    const userId = Number(session);
-
-    if (!Number.isInteger(userId) || userId <= 0) {
-        return res.status(401).json({
-            error: {
-                code: "UNAUTHENTICATED",
-                message: "Authentication required",
-            },
-        });
-    }
-
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-            id: true,
-            email: true,
-            role: true,
-        },
-    });
+    const user = await getUserForSessionToken(token);
 
     if (!user) {
-        return res.status(401).json({
-            error: {
-                code: "UNAUTHENTICATED",
-                message: "Authentication required",
-            },
-        });
+        res.clearCookie(SESSION_COOKIE_NAME, clearSessionCookieOptions);
+        return sendUnauthenticated(res);
     }
 
     res.locals.user = user;
