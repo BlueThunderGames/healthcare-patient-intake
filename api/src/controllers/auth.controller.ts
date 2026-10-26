@@ -38,12 +38,7 @@ export async function registerController(req: Request, res: Response) {
             });
         }
 
-        return res.status(500).json({
-            error: {
-                code: "INTERNAL_SERVER_ERROR",
-                message: "An unexpected error occurred",
-            },
-        });
+        throw error;
     }
 }
 
@@ -83,12 +78,7 @@ export async function loginController(req: Request, res: Response) {
             })
         }
 
-        return res.status(500).json({
-            error: {
-                code: "INTERNAL_SERVER_ERROR",
-                message: "An unexpected error occurred",
-            },
-        });
+        throw error;
     }
 }   
 

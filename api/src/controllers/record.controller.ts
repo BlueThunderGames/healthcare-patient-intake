@@ -22,11 +22,6 @@ export async function myPatientRecordController(
         },
       });
     }
-    return res.status(500).json({
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "An unexpected error occurred",
-      },
-    });
+    throw error;
   }
 }
