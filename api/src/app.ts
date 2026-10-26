@@ -1,20 +1,21 @@
-import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import { env } from "./config/env.js";
 import authRoutes from "./routes/auth.routes.js";
-import patientRoutes from './routes/patient.routes.js'
+import patientRoutes from "./routes/patient.routes.js";
 
 const app = express();
 
-const clientOrigin = process.env.CLIENT_ORIGIN;
-
-if (!clientOrigin) {
-    throw new Error("CLIENT_ORIGIN environment variable is required");
+if (env.NODE_ENV === "production") {
+    app.set("trust proxy", 1);
 }
 
+app.use(helmet());
+
 app.use(cors({
-    origin: clientOrigin,
+    origin: env.CLIENT_ORIGIN,
     credentials: true,
 }));
 

@@ -1,9 +1,16 @@
 import { Router } from "express";
-import { registerController, loginController, logoutController, meController } from "../controllers/auth.controller.js";
+import {
+    loginController,
+    logoutController,
+    meController,
+    registerController,
+} from "../controllers/auth.controller.js";
+import { loginRateLimit } from "../middleware/login-rate-limit.js";
 import { requireAuth } from "../middleware/require-auth.js";
+
 const router = Router();
 
-router.post("/login", loginController);
+router.post("/login", loginRateLimit, loginController);
 
 router.post("/register", registerController);
 

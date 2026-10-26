@@ -1,11 +1,12 @@
 import type { CookieOptions } from "express";
+import { env } from "./env.js";
 
 export const SESSION_COOKIE_NAME = "session";
 export const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 
 const sharedCookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
+  secure: env.NODE_ENV === "production",
   sameSite: "lax",
   path: "/",
 } satisfies CookieOptions;
