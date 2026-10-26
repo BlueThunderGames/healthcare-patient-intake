@@ -1,5 +1,13 @@
 import type { Request, Response } from "express";
-import { getPatientProfile } from "../services/patient.service.js"
+import { patientListQuerySchema } from "../validators/patient.validator.js";
+import { getPatientProfile, listPatients } from "../services/patient.service.js";
+
+export async function listPatientsController(req: Request, res: Response) {
+    const query = patientListQuerySchema.parse(req.query);
+    const patients = await listPatients(query.q);
+
+    return res.status(200).json({ patients });
+}
 
 export async function patientController(_req: Request, res: Response) {
     try {

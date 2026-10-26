@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { ZodError } from "zod";
 
 type RequestSyntaxError = SyntaxError & {
   status?: number;
@@ -24,6 +25,19 @@ export function errorHandler(
 ) {
   if (res.headersSent) {
     return next(error);
+  }
+
+  if (error instanceof ZodError) {
+    return res.status(400).json({
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "Invalid input",
+        details: error.issues.map((issue) => ({
+          path: issue.path,
+          message: issue.message,
+        })),
+      },
+    });
   }
 
   if (

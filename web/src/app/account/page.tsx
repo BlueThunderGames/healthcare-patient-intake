@@ -13,6 +13,7 @@ import {
   LogOut,
   ShieldCheck,
   UserRound,
+  Users,
 } from "lucide-react";
 import { AccountPageShell } from "@/components/account/account-page-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -122,6 +123,36 @@ export default function AccountPage() {
             </dl>
           </CardContent>
         </Card>
+
+        {user.role === "CLINICIAN" && (
+          <Card className="justify-between">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <span className="flex size-10 items-center justify-center rounded-lg bg-primary/5 text-primary">
+                  <Users aria-hidden="true" className="size-5" />
+                </span>
+                <div>
+                  <CardTitle>Patients</CardTitle>
+                  <CardDescription className="mt-1">
+                    Find and review patient records
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Search the clinic&apos;s patient profiles by name or email
+                address.
+              </p>
+              <Button asChild className="mt-5 w-full">
+                <Link href="/account/patients">
+                  View patients
+                  <ArrowRight aria-hidden="true" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {user.role === "PATIENT" && (
           <>
